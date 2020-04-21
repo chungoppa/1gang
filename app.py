@@ -41,8 +41,10 @@ line_bot_api = LineBotApi('bOiXla2lbcGsYnZkXnhxOAkyAzuGTSDrGVZGF/hrMjlws0+DhIoFq
 handler = WebhookHandler('6c7ba1b67dfdafeb29f7b546465154c4')
 #handler = WebhookHandler('f711b7b7c6a484191cbdb24593e766bc').
 
-
-
+@app.route("/test", methods=['GET'])
+def test():
+    print('asd')
+    return "ads"
 # 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
 def callback():
