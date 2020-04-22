@@ -5,7 +5,7 @@ import json
 from linebot.models import *
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-
+import  locale
 from flask import Flask, request, abort, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
 from linebot import (
@@ -32,7 +32,7 @@ userinfosheet = mainsheet.worksheet('userinfo')
 reportReceiver = mainsheet.worksheet('reportReceiver')
 
 #  locale
-# locale.setlocale(locale.LC_ALL, 'de_DE.utf-8')
+locale.setlocale(locale.LC_ALL, 'de_DE.utf-8')
 # Channel Access Token
 #line_bot_api = LineBotApi('E32ScD/CUH3lsXhc5G0DxYcGNteGlkRllINxS64FasXlTZX/0mwjqRmROimkIHW7VCa2eRmC7wE6jV1VaUDddifZ4hXV8iZUG47tvXDYT2fSRPWSEKIMNfZRhA7wIgRGAq6QKtyvX9GwWH5pRs2aWAdB04t89/1O/w1cDnyilFU=')
 
@@ -41,10 +41,6 @@ line_bot_api = LineBotApi('bOiXla2lbcGsYnZkXnhxOAkyAzuGTSDrGVZGF/hrMjlws0+DhIoFq
 handler = WebhookHandler('6c7ba1b67dfdafeb29f7b546465154c4')
 #handler = WebhookHandler('f711b7b7c6a484191cbdb24593e766bc').
 
-@app.route("/test", methods=['GET'])
-def test():
-    print('asd')
-    return "ads"
 # 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -115,13 +111,15 @@ def getUserinfo(event):
             for cell in cell_list:
                 if not cell.value == '':
                     cell_listo.append(cell.value)
-            line_bot_api.reply_message(event.reply_token, [TextSendMessage(text='Here is your information\n'+'Name : ' + str(tmpuserinfo.cell(row,2).value)
-                                                                        +'\nPhonenumber : '+ str(tmpuserinfo.cell(row,3).value)
-                                                                        +'\nAddress : ' + str(tmpuserinfo.cell(row,4).value)
-                                                                        +'\nHouseNumber : ' + str(tmpuserinfo.cell(row,5).value)
-                                                                        +'\nTime : ' + str(tmpuserinfo.cell(row,6).value)
-                                                                        +'\nAddictional Info : ' + str(tmpuserinfo.cell(row,7).value)
-                                                                        +'\n Order list : \n'+getorderfromlist(cell_listo)
+            line_bot_api.reply_message(event.reply_token, [TextSendMessage(text=str(tmpuserinfo.cell(row,2).value)+'さんの注文\n'
+                                                                        + '▼注文の品: \n ' + getorderfromlist(cell_listo)
+                                                                        + '\n \n▼お客様の情報'
+                                                                        +'\n電話番号 : '+ str(tmpuserinfo.cell(row,3).value)
+                                                                        +'\n住所 : ' + str(tmpuserinfo.cell(row,4).value)
+                                                                        +'\nマンション名 : ' + str(tmpuserinfo.cell(row,5).value)
+                                                                        +'\n配達希望日時 : ' + str(tmpuserinfo.cell(row,6).value)
+                                                                        +'\nその他: ' + str(tmpuserinfo.cell(row,7).value)
+                                                                        +' \n \ngrabデリバリーを使ってお届け致します。\n配達料金50,000 vndご負担お願いいたします。'
                                                                         ,quick_reply=QuickReply(items=[
                                                                                    QuickReplyButton(
                                                                                        action=MessageAction(label="Ok", text="ok")
@@ -138,12 +136,14 @@ def getUserinfo(event):
                 if not cell.value == '':
                     cell_listo.append(cell.value)
             receiver = reportReceiver.cell(1,1).value
-            line_bot_api.push_message(str(receiver),TextSendMessage(text='Order of Customer\n'+'Name : ' + str(tmpuserinfo.cell(tmp2.row,2).value)
-                                                                        +'\nPhonenumber : '+ str(tmpuserinfo.cell(tmp2.row,3).value)
-                                                                        +'\nAddress : ' + str(tmpuserinfo.cell(tmp2.row,4).value)
-                                                                        +'\nHouseNumber : ' + str(tmpuserinfo.cell(tmp2.row,5).value)
-                                                                        +'\nTime : ' + str(tmpuserinfo.cell(tmp2.row,6).value)
-                                                                        +'\nAddictional Info : ' + str(tmpuserinfo.cell(tmp2.row,7).value)+'\nList of oder : \n' +getorderfromlist(cell_listo)))
+            line_bot_api.push_message(str(receiver),TextSendMessage(text= str(tmpuserinfo.cell(tmp2.row,2).value)+'さんの注文\n'
+                                                                        + '\n▼注文の品: \n ' + getorderfromlist(cell_listo)
+                                                                        + '\n▼お客様の情報'
+                                                                        +'\n電話番号 : '+ str(tmpuserinfo.cell(tmp2.row,3).value)
+                                                                        +'\n住所 : ' + str(tmpuserinfo.cell(tmp2.row,4).value)
+                                                                        +'\nマンション名 : ' + str(tmpuserinfo.cell(tmp2.row,5).value)
+                                                                        +'\n配達希望日時 : ' + str(tmpuserinfo.cell(tmp2.row,6).value)
+                                                                        +'\nその他 : ' + str(tmpuserinfo.cell(tmp2.row,7).value)))
             ordersheet.insert_row(tmpordersheet.row_values(tmp.row))
             userinfosheet.insert_row(tmpuserinfo.row_values(tmp2.row))
             tmpordersheet.delete_row(tmp.row)
@@ -163,18 +163,8 @@ def getorderfromlist(list):
         price = getpricebyname(i)*count
         totalprice = totalprice+ price
         strorder = strorder + str(i) +' : x '+ str(count) +'    -    ' + str(price)+'\n'
-    return strorder + '\n Total :'+str(totalprice)
+    return strorder + '合計 :   '+str(totalprice)
 
-# def getReportofOrder(event,rowinTmpuserInfo):
-#     question_list = questionssheet.row_values(2)
-#     tmpuserinfo_list = tmpuserinfo.row_values(rowinTmpuserInfo)
-#     getUserInfofromList(question_list,tmpuserinfo_list)
-#     line_bot_api.reply_message(event.reply_token,TextSendMessage(text=getUserInfofromList(question_list,tmpuserinfo_list),quick_reply=QuickReply(items=[
-#                 QuickReplyButton(
-#                     action=MessageAction(label="Ok", text="ok")
-#                 ), QuickReplyButton(
-#                     action=MessageAction(label="Edit", text="edit")
-#                 )])))
 def getUserInfofromList(qlist,ulist):
     string = 'Here is your infomation :'
     i=1
@@ -199,7 +189,7 @@ def clearorder(event):
 def getpricebyname(name):
     if name == 'サンマの開き':
         return 60000
-    elif name == '塩サバ切り身' :
+    elif name == '塩サバ切り身':
         return 60000
     elif name == 'サケ切り身':
         return 75000
@@ -248,7 +238,7 @@ def submenu1(event):
         CarouselColumn(text=format(getpricebyname('サケ切り身'),',d'), title='サケ切り身',
                        thumbnail_image_url=サケ切り身, actions=[PostbackAction(label='カートに追加', data='サケ切り身')]),
         CarouselColumn(text=format(getpricebyname('サワラの味噌漬け'),',d'), title='サワラの味噌漬け',
-                       thumbnail_image_url=サワラの味噌漬け, actions=[PostbackAction(label='カートに追加', data='サワラの味噌漬け')])
+                       thumbnail_image_url=サワラの味噌漬け, actions=[PostbackAction(label='カートに追加', data='サワラの味噌漬け')]),
     ])
     template_message = TemplateSendMessage(
         alt_text='Carousel alt text', template=carousel_template)
@@ -336,7 +326,8 @@ def handle_postback(event):
                                            items=[
                                                QuickReplyButton(
                                                    action=MessageAction(label="完了", text="完了")
-                                               )])))
+                                               )
+                                           ])))
     elif event.postback.data == '塩サバ切り身':
         addtocart(event,"塩サバ切り身")
         line_bot_api.reply_message(event.reply_token,
@@ -500,7 +491,6 @@ def addtocart(event,orderid):
 def stfu():
     for richmenu in line_bot_api.get_rich_menu_list():
         print(richmenu)
-    line_bot_api.delete_rich_menu('richmenu-6522fcbec865c1c1053cd65bd09d8160')
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
@@ -552,11 +542,10 @@ def handle_message(event):
             ]
         )
     elif text == 'メニュー':
-        url = 'https://comps.gograph.com/japanese-food-icons-set-cartoon-style_gg96256953.jpg'
-        app.logger.info("url=" + url)
+        menu = request.url_root + '/static/menu.jpg'
         line_bot_api.reply_message(
             event.reply_token,
-            ImageSendMessage(url, url)
+            ImageSendMessage(menu, menu)
         )
     elif text == '営業時間':
         clearorder(event)
@@ -603,4 +592,4 @@ import os
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='127.0.0.1', port=port)
