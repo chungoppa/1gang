@@ -35,14 +35,14 @@ userinfosheet = mainsheet.worksheet('userinfo')
 reportReceiver = mainsheet.worksheet('reportReceiver')
 
 # urllib3
-http= urllib3.PoolManager()
+# http= urllib3.PoolManager()
 # token
-# line_bot_api = LineBotApi('bOiXla2lbcGsYnZkXnhxOAkyAzuGTSDrGVZGF/hrMjlws0+DhIoFq8i9f3xjR8DHmR6KqVpU/UW+SR8yAKDyt/PEecZg5jU9AjAIPQBvYpZRrQPrzWVQCmd10l8q4E0q17mtskg/bljPsPxPFSUj9QdB04t89/1O/w1cDnyilFU=')
-line_bot_api = LineBotApi('cX51Ve+hutrgp3yj8vU0+HzTgfDT3v5vJm8Z8ZswRLI09+tqBp3KzUA+wXyOiR3GovF0UEd5yip6Jfjw5gdUPv4jYWIjsvJNxifxwuM/S9LhVSbZcZCW7lREgwXT3/Zt9KNENifbpWQ8qCKRW+txiAdB04t89/1O/w1cDnyilFU=')
+line_bot_api = LineBotApi('bOiXla2lbcGsYnZkXnhxOAkyAzuGTSDrGVZGF/hrMjlws0+DhIoFq8i9f3xjR8DHmR6KqVpU/UW+SR8yAKDyt/PEecZg5jU9AjAIPQBvYpZRrQPrzWVQCmd10l8q4E0q17mtskg/bljPsPxPFSUj9QdB04t89/1O/w1cDnyilFU=')
+# line_bot_api = LineBotApi('cX51Ve+hutrgp3yj8vU0+HzTgfDT3v5vJm8Z8ZswRLI09+tqBp3KzUA+wXyOiR3GovF0UEd5yip6Jfjw5gdUPv4jYWIjsvJNxifxwuM/S9LhVSbZcZCW7lREgwXT3/Zt9KNENifbpWQ8qCKRW+txiAdB04t89/1O/w1cDnyilFU=')
 
 # Channel Secret
-# handler = WebhookHandler('6c7ba1b67dfdafeb29f7b546465154c4')
-handler = WebhookHandler('f958e6eee611d7493c2305a783c3586c')
+handler = WebhookHandler('6c7ba1b67dfdafeb29f7b546465154c4')
+# handler = WebhookHandler('f958e6eee611d7493c2305a783c3586c')
 
 # 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
@@ -517,27 +517,27 @@ def addtocart(event,orderid):
                 tmpordersheet.update_cell(cell.row,cell.col,orderid)
                 return
 
-def richmenuRegister():
-    richmenuimg = request.url_root + '/static/richmenu.jpg'
-    response = http.request('GET',richmenuimg)
-    rich_menu_to_create = RichMenu(
-        size=RichMenuSize(width=2500, height=1686),
-        selected=False,
-        name="20cm",
-        chat_bar_text="Tap here",
-        areas=[RichMenuArea(
-            bounds=RichMenuBounds(x=0, y=0, width=2500, height=843),
-            action=MessageAction(label='touch me !!', text='1111'))]
-    )
-    rich_menu_id = line_bot_api.create_rich_menu(rich_menu=rich_menu_to_create)
-    reportReceiver.update_cell(2,2,str(rich_menu_id))
+# def richmenuRegister():
+#     richmenuimg = request.url_root + '/static/richmenu.jpg'
+#     response = http.request('GET',richmenuimg)
+#     rich_menu_to_create = RichMenu(
+#         size=RichMenuSize(width=2500, height=1686),
+#         selected=False,
+#         name="20cm",
+#         chat_bar_text="Tap here",
+#         areas=[RichMenuArea(
+#             bounds=RichMenuBounds(x=0, y=0, width=2500, height=843),
+#             action=MessageAction(label='touch me !!', text='1111'))]
+#     )
+#     rich_menu_id = line_bot_api.create_rich_menu(rich_menu=rich_menu_to_create)
+#     reportReceiver.update_cell(2,2,str(rich_menu_id))
 
-    line_bot_api.set_rich_menu_image('richmenu-4b3a84bb1848df2aa0b29bfd82e1f260','image/png', response.data)
-    line_bot_api.set_default_rich_menu('richmenu-4b3a84bb1848df2aa0b29bfd82e1f260')
+#     line_bot_api.set_rich_menu_image('richmenu-4b3a84bb1848df2aa0b29bfd82e1f260','image/png', response.data)
+#     line_bot_api.set_default_rich_menu('richmenu-4b3a84bb1848df2aa0b29bfd82e1f260')
 
-def stfu():
-    for richmenu in line_bot_api.get_rich_menu_list():
-        print(richmenu.rich_menu_id)
+# def stfu():
+#     for richmenu in line_bot_api.get_rich_menu_list():
+#         print(richmenu.rich_menu_id)
 
 
 @handler.add(MessageEvent, message=TextMessage)
@@ -548,8 +548,6 @@ def handle_message(event):
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text=event.source.user_id))
-    elif text == '1':
-        richmenuRegister()
     elif text == 'レストラン予約':
         line_bot_api.reply_message(
             event.reply_token,
