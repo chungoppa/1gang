@@ -7,7 +7,7 @@ import sys
 from linebot.models import *
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import locale
+# import locale
 from werkzeug.middleware.proxy_fix import ProxyFix
 from argparse import ArgumentParser
 from linebot import (
@@ -34,7 +34,7 @@ userinfosheet = mainsheet.worksheet('userinfo')
 reportReceiver = mainsheet.worksheet('reportReceiver')
 
 #  locale
-locale.setlocale(locale.LC_ALL, 'de_DE.utf-8')
+# locale.setlocale(locale.LC_ALL, 'de_DE.utf-8')
 # Channel Access Token
 #line_bot_api = LineBotApi('E32ScD/CUH3lsXhc5G0DxYcGNteGlkRllINxS64FasXlTZX/0mwjqRmROimkIHW7VCa2eRmC7wE6jV1VaUDddifZ4hXV8iZUG47tvXDYT2fSRPWSEKIMNfZRhA7wIgRGAq6QKtyvX9GwWH5pRs2aWAdB04t89/1O/w1cDnyilFU=')
 
