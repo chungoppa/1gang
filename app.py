@@ -2,6 +2,8 @@ import time
 from collections import Counter
 from flask import Flask, request, abort, app
 import json
+import urllib3
+
 from linebot.models import *
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -32,13 +34,15 @@ userinfosheet = mainsheet.worksheet('userinfo')
 # menusheet = mainsheet.worksheet('Menu')
 reportReceiver = mainsheet.worksheet('reportReceiver')
 
+# urllib3
+http= urllib3.PoolManager()
 # token
-line_bot_api = LineBotApi('bOiXla2lbcGsYnZkXnhxOAkyAzuGTSDrGVZGF/hrMjlws0+DhIoFq8i9f3xjR8DHmR6KqVpU/UW+SR8yAKDyt/PEecZg5jU9AjAIPQBvYpZRrQPrzWVQCmd10l8q4E0q17mtskg/bljPsPxPFSUj9QdB04t89/1O/w1cDnyilFU=')
-# line_bot_api = LineBotApi('cX51Ve+hutrgp3yj8vU0+HzTgfDT3v5vJm8Z8ZswRLI09+tqBp3KzUA+wXyOiR3GovF0UEd5yip6Jfjw5gdUPv4jYWIjsvJNxifxwuM/S9LhVSbZcZCW7lREgwXT3/Zt9KNENifbpWQ8qCKRW+txiAdB04t89/1O/w1cDnyilFU=')
+# line_bot_api = LineBotApi('bOiXla2lbcGsYnZkXnhxOAkyAzuGTSDrGVZGF/hrMjlws0+DhIoFq8i9f3xjR8DHmR6KqVpU/UW+SR8yAKDyt/PEecZg5jU9AjAIPQBvYpZRrQPrzWVQCmd10l8q4E0q17mtskg/bljPsPxPFSUj9QdB04t89/1O/w1cDnyilFU=')
+line_bot_api = LineBotApi('cX51Ve+hutrgp3yj8vU0+HzTgfDT3v5vJm8Z8ZswRLI09+tqBp3KzUA+wXyOiR3GovF0UEd5yip6Jfjw5gdUPv4jYWIjsvJNxifxwuM/S9LhVSbZcZCW7lREgwXT3/Zt9KNENifbpWQ8qCKRW+txiAdB04t89/1O/w1cDnyilFU=')
 
 # Channel Secret
-handler = WebhookHandler('6c7ba1b67dfdafeb29f7b546465154c4')
-# handler = WebhookHandler('U52396bc37f1eeef1f90327510e9cca1a')
+# handler = WebhookHandler('6c7ba1b67dfdafeb29f7b546465154c4')
+handler = WebhookHandler('f958e6eee611d7493c2305a783c3586c')
 
 # 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
@@ -118,6 +122,7 @@ def getUserinfo(event):
                                                                         +'\nマンション名 : ' + str(tmpuserinfo.cell(row,5).value)
                                                                         +'\n配達希望日時 : ' + str(tmpuserinfo.cell(row,6).value)
                                                                         +'\nその他: ' + str(tmpuserinfo.cell(row,7).value)
+
                                                                         +' \n \ngrabデリバリーを使ってお届け致します。\n配達料金50,000 vndご負担お願いいたします。'
                                                                         ,quick_reply=QuickReply(items=[
                                                                                    QuickReplyButton(
@@ -128,25 +133,31 @@ def getUserinfo(event):
                                                            ])
 
         elif col is None and ( not cell_list is None) and text == 'デリバリー':
-            ordersheet.insert_row(tmpordersheet.row_values(tmp.row))
-            userinfosheet.insert_row(tmpuserinfo.row_values(tmp2.row))
-            tmpordersheet.delete_row(tmp.row)
-            tmpuserinfo.delete_row(tmp2.row)
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text='ご注文ありがとうございます。'))
             cell_listo= []
             cell_list = tmpordersheet.range('B' + str(tmp.row) + ':Z' + str(tmp.row))
             for cell in cell_list:
                 if not cell.value == '':
                     cell_listo.append(cell.value)
             receiver = reportReceiver.cell(1,1).value
-            line_bot_api.push_message(str(receiver),TextSendMessage(text= str(tmpuserinfo.cell(tmp2.row,2).value)+'さんの注文\n'
-                                                                        + '\n▼注文の品: \n ' + getorderfromlist(cell_listo)
+            print(receiver)
+            print(tmp2.row)
+            line_bot_api.push_message(receiver,TextSendMessage(text=
+                                                               str(tmpuserinfo.cell(tmp2.row,2).value)+'さんの注文'
+                                                                        + '\n \n▼注文の品: \n '
+                                                                        + getorderfromlist(cell_listo)
                                                                         + '\n▼お客様の情報'
                                                                         +'\n電話番号 : '+ str(tmpuserinfo.cell(tmp2.row,3).value)
                                                                         +'\n住所 : ' + str(tmpuserinfo.cell(tmp2.row,4).value)
                                                                         +'\nマンション名 : ' + str(tmpuserinfo.cell(tmp2.row,5).value)
                                                                         +'\n配達希望日時 : ' + str(tmpuserinfo.cell(tmp2.row,6).value)
-                                                                        +'\nその他 : ' + str(tmpuserinfo.cell(tmp2.row,7).value)))
+                                                                        +'\nその他 : ' + str(tmpuserinfo.cell(tmp2.row,7).value)
+
+                                                                    ))
+            ordersheet.insert_row(tmpordersheet.row_values(tmp.row))
+            userinfosheet.insert_row(tmpuserinfo.row_values(tmp2.row))
+            tmpordersheet.delete_row(tmp.row)
+            tmpuserinfo.delete_row(tmp2.row)
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text='ご注文ありがとうございます。'))
 
         elif col is None and (not cell_list is None) and text =='情報変更' :
             tmpuserinfo.delete_row(tmp2.row)
@@ -158,12 +169,12 @@ def getorderfromlist(list):
     strorder = ''
     tmplist = list
     totalprice = 0
-    for i in Counter(tmplist) :
+    for i in Counter(tmplist):
         count = list.count(i)
         price = getpricebyname(i)*count
         totalprice = totalprice+ price
-        strorder = strorder + str(i) +' : x '+ str(count) +'    -    ' + str(price)+'\n'
-    return strorder + '合計 :   '+str(totalprice)
+        strorder = strorder + str(i) +' : x '+ str(count) +'    -    ' + format(price,',d')+'\n'
+    return strorder + '合計 :   '+format(totalprice, ',d')
 
 def getUserInfofromList(qlist,ulist):
     string = 'Here is your infomation :'
@@ -320,14 +331,15 @@ def showsubmenu(event):
             MessageAction(label='生鮮食品', text='生鮮食品')
         ]),
         CarouselColumn(text='約一人前', title='お潰物・サラダ他', actions=[
-            MessageAction(label='お潰物・サラダ他 \n 約一人前', text='お潰物・サラダ他-約一人前')
+            MessageAction(label='お潰物・サラダ他 ', text='お潰物・サラダ他-約一人前')
+        ]),
+        CarouselColumn(text='1袋50ｇ-約一人前', title='お惣菜', actions=[
+            MessageAction(label='お惣菜', text='お惣菜1袋50ｇ-約一人前')
         ]),
         CarouselColumn(text=' ', title='一品物', actions=[
             MessageAction(label='一品物', text='一品物')
         ]),
-        CarouselColumn(text='1袋50ｇ-約一人前', title='お惣菜', actions=[
-            MessageAction(label='お惣菜1袋50ｇ-約一人前', text='お惣菜1袋50ｇ-約一人前')
-        ]),
+
     ])
     template_message = TemplateSendMessage(
         alt_text='Carousel alt text', template=carousel_template)
@@ -339,45 +351,155 @@ def showsubmenu(event):
 def handle_postback(event):
     # sub1
     if event.postback.data == 'サンマの開き':
-        addtocart(event,"サンマの開き")
+        addtocart(event, "サンマの開き")
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='サンマの開きカートに追加 ', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
     elif event.postback.data == '塩サバ切り身':
-        addtocart(event,"塩サバ切り身")
+        addtocart(event, "塩サバ切り身")
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='塩サバ切り身カートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
     elif event.postback.data == 'サケ切り身':
         addtocart(event, "サケ切り身")
-    elif event.postback.data =='サワラの味噌漬け':
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='サケ切り身カートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
+    elif event.postback.data == 'サワラの味噌漬け':
         addtocart(event, "サワラの味噌漬け")
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='サワラの味噌漬けカートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
     # sub2
     elif event.postback.data == '紅茶豚（スライス５枚）':
-        addtocart(event,"紅茶豚（スライス５枚）")
+        addtocart(event, "紅茶豚（スライス５枚）")
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='紅茶豚（スライス５枚）カートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
     elif event.postback.data == '手作り-冷凍餃子':
         addtocart(event, "手作り-冷凍餃子")
-    elif event.postback.data =='砂肝にんにく炒め':
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='手作り-冷凍餃子カートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
+    elif event.postback.data == '砂肝にんにく炒め':
         addtocart(event, "砂肝にんにく炒め")
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='砂肝にんにく炒めカートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
+
     elif event.postback.data == 'ハンバーグ（ソース付）':
-        addtocart(event,"ハンバーグ（ソース付）")
+        addtocart(event, "ハンバーグ（ソース付）")
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='ハンバーグ（ソース付）カートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
     elif event.postback.data == 'エビチリ':
         addtocart(event, "エビチリ")
-    elif event.postback.data =='サバの味噌煮':
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='エビチリ', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
+    elif event.postback.data == 'サバの味噌煮':
         addtocart(event, "サバの味噌煮")
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='サバの味噌煮カートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
+
     elif event.postback.data == '豚生姜焼き':
-        addtocart(event,"豚生姜焼き")
+        addtocart(event, "豚生姜焼き")
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='豚生姜焼きカートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
     elif event.postback.data == 'レバニラ炒め':
         addtocart(event, "レバニラ炒め")
-    elif event.postback.data =='手羽醤油焼き':
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='レバニラ炒めカートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
+    elif event.postback.data == '手羽醤油焼き':
         addtocart(event, "手羽醤油焼き")
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='手羽醤油焼きカートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
+
     elif event.postback.data == '中華丼（ソースのみ）':
-        addtocart(event,"中華丼（ソースのみ）")
+        addtocart(event, "中華丼（ソースのみ）")
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='中華丼（ソースのみ）カートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
     #     sub3
     elif event.postback.data == '野菜サラダ':
-        addtocart(event,"野菜サラダ")
+        addtocart(event, "野菜サラダ")
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='野菜サラダカートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
     #         sub4
     elif event.postback.data == 'れんこんキンピラ':
-        addtocart(event,"れんこんキンピラ")
-
+        addtocart(event, "れんこんキンピラ")
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='れんこんキンピラカートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
     elif event.postback.data == 'ひじきの炒め煮':
         addtocart(event, "ひじきの炒め煮")
-    elif event.postback.data =='高菜のじゃこ炒め':
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='ひじきの炒め煮カートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
+    elif event.postback.data == '高菜のじゃこ炒め':
         addtocart(event, "高菜のじゃこ炒め")
+        line_bot_api.reply_message(event.reply_token,
+                                   TextSendMessage(text='高菜のじゃこ炒めカートに追加', quick_reply=QuickReply(
+                                       items=[
+                                           QuickReplyButton(
+                                               action=MessageAction(label="完了", text="完了")
+                                           ), QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
 
 def addtocart(event,orderid):
     # tmp = None
@@ -393,11 +515,29 @@ def addtocart(event,orderid):
         for cell in cell_list:
             if cell.value == '':
                 tmpordersheet.update_cell(cell.row,cell.col,orderid)
-                line_bot_api.reply_message(event.reply_token,TextSendMessage(text=orderid,
-                    quick_reply=QuickReply(items=[QuickReplyButton(action=MessageAction(label="完了", text="完了"))
-                                                , QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
                 return
 
+def richmenuRegister():
+    richmenuimg = request.url_root + '/static/richmenu.jpg'
+    response = http.request('GET',richmenuimg)
+    rich_menu_to_create = RichMenu(
+        size=RichMenuSize(width=2500, height=1686),
+        selected=False,
+        name="20cm",
+        chat_bar_text="Tap here",
+        areas=[RichMenuArea(
+            bounds=RichMenuBounds(x=0, y=0, width=2500, height=843),
+            action=MessageAction(label='touch me !!', text='1111'))]
+    )
+    rich_menu_id = line_bot_api.create_rich_menu(rich_menu=rich_menu_to_create)
+    reportReceiver.update_cell(2,2,str(rich_menu_id))
+
+    line_bot_api.set_rich_menu_image('richmenu-4b3a84bb1848df2aa0b29bfd82e1f260','image/png', response.data)
+    line_bot_api.set_default_rich_menu('richmenu-4b3a84bb1848df2aa0b29bfd82e1f260')
+
+def stfu():
+    for richmenu in line_bot_api.get_rich_menu_list():
+        print(richmenu.rich_menu_id)
 
 
 @handler.add(MessageEvent, message=TextMessage)
@@ -408,6 +548,8 @@ def handle_message(event):
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text=event.source.user_id))
+    elif text == '1':
+        richmenuRegister()
     elif text == 'レストラン予約':
         line_bot_api.reply_message(
             event.reply_token,
@@ -476,8 +618,6 @@ def handle_message(event):
                 tmpuserinfo.insert_row(new)
     elif 1==1:
         getUserinfo(event)
-
-
 
 
 import os
