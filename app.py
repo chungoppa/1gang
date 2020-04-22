@@ -7,8 +7,7 @@ import sys
 from linebot.models import *
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-# import  locale
-from flask import Flask, request, abort, send_from_directory
+import locale
 from werkzeug.middleware.proxy_fix import ProxyFix
 from argparse import ArgumentParser
 from linebot import (
@@ -35,7 +34,7 @@ userinfosheet = mainsheet.worksheet('userinfo')
 reportReceiver = mainsheet.worksheet('reportReceiver')
 
 #  locale
-# locale.setlocale(locale.LC_ALL, 'de_DE.utf-8')
+locale.setlocale(locale.LC_ALL, 'de_DE.utf-8')
 # Channel Access Token
 #line_bot_api = LineBotApi('E32ScD/CUH3lsXhc5G0DxYcGNteGlkRllINxS64FasXlTZX/0mwjqRmROimkIHW7VCa2eRmC7wE6jV1VaUDddifZ4hXV8iZUG47tvXDYT2fSRPWSEKIMNfZRhA7wIgRGAq6QKtyvX9GwWH5pRs2aWAdB04t89/1O/w1cDnyilFU=')
 
@@ -594,11 +593,5 @@ def handle_message(event):
 
 
 if __name__ == "__main__":
-    arg_parser = ArgumentParser(
-        usage='Usage: python ' + __file__ + ' [--port <port>] [--help]'
-    )
-    arg_parser.add_argument('-p', '--port', type=int, default=8000, help='port')
-    arg_parser.add_argument('-d', '--debug', default=False, help='debug')
-    options = arg_parser.parse_args()
-
-    app.run(debug=options.debug, port=options.port)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
