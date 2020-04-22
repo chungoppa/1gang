@@ -32,15 +32,13 @@ userinfosheet = mainsheet.worksheet('userinfo')
 # menusheet = mainsheet.worksheet('Menu')
 reportReceiver = mainsheet.worksheet('reportReceiver')
 
-#  locale
-# locale.setlocale(locale.LC_ALL, 'de_DE.utf-8')
-# Channel Access Token
-#line_bot_api = LineBotApi('E32ScD/CUH3lsXhc5G0DxYcGNteGlkRllINxS64FasXlTZX/0mwjqRmROimkIHW7VCa2eRmC7wE6jV1VaUDddifZ4hXV8iZUG47tvXDYT2fSRPWSEKIMNfZRhA7wIgRGAq6QKtyvX9GwWH5pRs2aWAdB04t89/1O/w1cDnyilFU=')
-
+# token
 line_bot_api = LineBotApi('bOiXla2lbcGsYnZkXnhxOAkyAzuGTSDrGVZGF/hrMjlws0+DhIoFq8i9f3xjR8DHmR6KqVpU/UW+SR8yAKDyt/PEecZg5jU9AjAIPQBvYpZRrQPrzWVQCmd10l8q4E0q17mtskg/bljPsPxPFSUj9QdB04t89/1O/w1cDnyilFU=')
+# line_bot_api = LineBotApi('cX51Ve+hutrgp3yj8vU0+HzTgfDT3v5vJm8Z8ZswRLI09+tqBp3KzUA+wXyOiR3GovF0UEd5yip6Jfjw5gdUPv4jYWIjsvJNxifxwuM/S9LhVSbZcZCW7lREgwXT3/Zt9KNENifbpWQ8qCKRW+txiAdB04t89/1O/w1cDnyilFU=')
+
 # Channel Secret
 handler = WebhookHandler('6c7ba1b67dfdafeb29f7b546465154c4')
-#handler = WebhookHandler('f711b7b7c6a484191cbdb24593e766bc').
+# handler = WebhookHandler('U52396bc37f1eeef1f90327510e9cca1a')
 
 # 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
@@ -400,9 +398,7 @@ def addtocart(event,orderid):
                                                 , QuickReplyButton(action=MessageAction(label='戻る', text='戻る'))])))
                 return
 
-def stfu():
-    for richmenu in line_bot_api.get_rich_menu_list():
-        print(richmenu)
+
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
@@ -413,10 +409,9 @@ def handle_message(event):
             event.reply_token,
             TextSendMessage(text=event.source.user_id))
     elif text == 'レストラン予約':
-        stfu()
-        # line_bot_api.reply_message(
-        #     event.reply_token,
-        #     TextSendMessage(text="This feature being developed"))
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="開発中のこの機能"))
     elif text == '食材・弁当デリバリー':
         clearorder(event)
         showsubmenu(event)
@@ -435,7 +430,7 @@ def handle_message(event):
         line_bot_api.reply_message(
             event.reply_token, [
                 TextSendMessage(
-                    text='・居酒屋「くーろん」 \n・原田商店 \n \n 63 Pham Viet Chanh street.,District Binh Thanh,Ho Chi Minh \n \n TEL：08 3840 9826 \n 携帯：090 829 5470')
+                    text='・居酒屋「くーろん」 \n・原田商店 \n \n 63 Pham Viet Chanh street.,District Binh Thanh,Ho Chi Minh \n \n TEL：0838409826 \n 携帯：0908295470')
             ]
         )
     elif text == 'メニュー':
